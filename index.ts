@@ -5,9 +5,17 @@ import * as p from 'path';
 
 const server = http.createServer()
 const publicDir = p.resolve(__dirname, 'public')
+const cacheAge = 3600 * 24 * 365
 
 server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
   const {method, url: path, headers} = req;
+
+  if(method === 'POST') {
+    res.statusCode = 405
+    res.end()
+    return;
+  }
+
   const baseURL = 'http://' + req.headers.host + '/';
   const myUrl = new URL(path, baseURL)
   let fileName = myUrl.pathname.slice(1)
@@ -30,6 +38,7 @@ server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
         res.end('服务器繁忙')
       }
     }else{
+      res.setHeader("Cache-Control",`public, max-age=${cacheAge}`)
       res.end(data)
     }
   })
