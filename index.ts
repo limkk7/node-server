@@ -10,35 +10,31 @@ server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
   const {method, url: path, headers} = req;
   const baseURL = 'http://' + req.headers.host + '/';
   const myUrl = new URL(path, baseURL)
-    
-  switch(myUrl.pathname) {
-    case '/index.html':
-      res.setHeader('Content-Type', 'text/html; charset=utf-8')
-      fs.readFile(p.resolve(publicDir, 'index.html'),(err, data) => {
-        if(err) throw err;
-        res.end(data.toString())
-      })
-      break;
-    case '/style.css':
-      res.setHeader('Content-Type', 'text/css; charset=utf-8')
-      fs.readFile(p.resolve(publicDir, 'style.css'),(err, data) => {
-        if(err) throw err;
-        res.end(data.toString())
-      })
-      break;
-      case '/main.js':
-      res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
-      fs.readFile(p.resolve(publicDir, 'main.js'),(err, data) => {
-        if(err) throw err;
-        res.end(data.toString())
-      })
-      break;
-    default:
-      res.statusCode = 404
-      res.end()
-  } 
+  let fileName = myUrl.pathname.slice(1)
+  if(fileName === '') {
+    fileName = 'index.html'
+  }
+  // res.setHeader('Content-Type', 'text/html; charset=utf-8')
+  fs.readFile(p.resolve(publicDir, fileName),(err, data) => {
+    if(err) {
+      if(err.errno === -2){
+        res.statusCode = 404
+        fs.readFile(p.resolve(publicDir, '404.html'), (e, d) => {
+          res.end(d)
+        })
+      } else if(err.errno === -21){
+        res.statusCode = 403
+        res.end('403 forbidden')
+      }else{
+        res.statusCode = 500
+        res.end('服务器繁忙')
+      }
+    }else{
+      res.end(data)
+    }
+  })
 })
 const HOST = 'localhost';
-const PORT = 7766;
+const PORT = 7767;
 server.listen(PORT) 
 console.log(`Running on ${PORT}`);
